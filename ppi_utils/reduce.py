@@ -1,14 +1,13 @@
-import shutil
-from pathlib import Path
-from typing import Union
-
 import matplotlib as mpl
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import shutil
 from Bio import SeqIO
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
+from pathlib import Path
+from typing import Union
 
 
 @mpl.style.context('seaborn')
@@ -68,6 +67,7 @@ def filter_ppis_and_fasta_by_len(
 
 
 def dedup_pairs(pairs: pd.DataFrame) -> pd.DataFrame:
+    pairs = pairs.copy()
     pairs.iloc[:, [0, 1]] = np.sort(pairs.iloc[:, [0, 1]], axis=1)
     return pairs.drop_duplicates()
 
