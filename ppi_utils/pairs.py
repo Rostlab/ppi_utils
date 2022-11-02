@@ -47,9 +47,10 @@ def make_c_classes(test_tsv: Union[str, Path],
 def make_negatives(ppis: pd.DataFrame,
                    cfg: Config,
                    proteome: dict[int, dict[str, str]] = None,
+                   quiet: bool = False,
                    ) -> tuple[pd.DataFrame, pd.DataFrame,
                               pd.DataFrame, Union[Figure, None]]:
-    negatives, bias, fig, _ = find_negative_pairs(ppis, cfg, proteome)
+    negatives, bias, fig, _ = find_negative_pairs(ppis, cfg, proteome, quiet)
     ppis['label'] = 1
     ppis = ppis[[c for c in ppis.columns if c not in
                  ('minlen', 'maxlen', 'degree_0', 'degree_1', 'n_seqs')]]
@@ -160,15 +161,17 @@ def find_negative_pairs_tuple(args):
 
 
 def find_negative_pairs(true_ppis: pd.DataFrame,
-                        cfg: Config, proteome: dict[int, dict[str, str]] = None,
+                        cfg: Config, proteome: dict[Union[str, int], dict[str, str]] = None,
                         quiet: bool = False) -> tuple[pd.DataFrame, Union[float, np.ndarray],
                                                       Union[Figure, None], int]:
+    if proteome is None:
+        proteome = dict()
     # recursive call for multi-species case
     if 'species' in true_ppis.columns and len(set(true_ppis.species)) > 1:
         print(f'sampling negatives per species! aim for '
               f'{int(len(true_ppis) * cfg.ratio)}')
         negatives, biases = list(), dict()
-        tuples = [(ppis, cfg, {int(sp): proteome[int(sp)]}, True) for sp, ppis in
+        tuples = [(ppis, cfg, {str(sp): proteome.get(str(sp), dict())}, True) for sp, ppis in
                   true_ppis.groupby('species')]
         with concurrent.futures.ProcessPoolExecutor(max_workers=len(tuples)) as executor:
             for n, b, f, s in executor.map(find_negative_pairs_tuple, tuples):
@@ -189,7 +192,8 @@ def find_negative_pairs(true_ppis: pd.DataFrame,
         return negatives, bias, None, 0
 
     if 'species' in true_ppis.columns:
-        sp = int(set(true_ppis.species).pop())
+        sp = str(set(true_ppis.species).pop())
+        sp = int(sp) if sp.isnumeric() else sp
         disable = False
     else:
         quiet = True
@@ -208,7 +212,7 @@ def find_negative_pairs(true_ppis: pd.DataFrame,
     proteins, counts = np.unique(true_ppis.iloc[:, [0, 1]], return_counts=True)
     n = len(proteins)
 
-    rng = np.random.default_rng(seed=cfg.seed + sp)
+    rng = np.random.default_rng(seed=cfg.seed + (sp if type(sp) == int else 0))
 
     wants = np.floor(counts * cfg.ratio).astype(int)
     if cfg.strategy.value != 1:
@@ -290,13 +294,13 @@ def find_negative_pairs(true_ppis: pd.DataFrame,
 
 def find_proteome_negative_pairs(extra: np.ndarray,
                                  proteome_ids: set[str],
-                                 sp: int, seed: int,
+                                 sp: Union[int, str], seed: int,
                                  idx_to_crc: Callable,
                                  ideal_median: float,
                                  verbose: bool = True,
                                  quiet: bool = False,
                                  ) -> tuple[pd.DataFrame, int]:
-    rng = np.random.default_rng(seed=seed + sp + 1)
+    rng = np.random.default_rng(seed=seed + 1 + (sp if type(sp) == int else 0))
     min_extra = np.max(extra[:, 1])
     extra_interactions = np.sum(extra[:, 1])
     avg_extra = np.ceil(extra_interactions / ideal_median).astype(int)

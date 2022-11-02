@@ -404,7 +404,7 @@ def plot_ratio_degree(positives: pd.DataFrame,
 def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
                             rasterized: bool = True,
                             ratio: float = 1.0,
-                            ) -> JointGrid:
+                            ) -> Figure:
     if minus is None:
         plus, minus = sep_plus_minus(plus)
 
@@ -430,7 +430,7 @@ def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
     # sns.despine(ax=g.ax_joint, left=False, bottom=False, right=False, top=False)
     sns.despine(ax=g.ax_marg_x, left=True)
     sns.despine(ax=g.ax_marg_y, bottom=False)
-    return g
+    return g.figure
 
 
 def plot_degrees_wide(ppis: pd.DataFrame,
