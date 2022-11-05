@@ -113,6 +113,15 @@ def to_fasta(_id: Union[str, int], seq: str, file_handle: IO) -> None:
     _ = file_handle.write(''.join(to_lines(_id, seq)))
 
 
+def to_lines(_id: str, seq: Union[str, Seq], lw: int = 60) -> str:
+    yield f'>{_id}\n'
+    i = 0
+    seq = str(seq)
+    while i < len(seq):
+        yield seq[i:i + lw] + '\n'
+        i += lw
+
+
 def write_json(_dict: dict, _json_path: Union[str, Path]) -> dict:
     with Path(_json_path).open('w') as json_file:
         json.dump(_dict, json_file, indent=2)
@@ -124,16 +133,7 @@ def read_json(_json_path: Union[str, Path]) -> dict:
         Path(_json_path).open('r')).items()}
 
 
-def to_lines(_id: str, seq: Union[str, Seq], lw: int = 60) -> str:
-    yield f'>{_id}\n'
-    i = 0
-    seq = str(seq)
-    while i < len(seq):
-        yield seq[i:i + lw] + '\n'
-        i += lw
-
-
-def clean(data_dir: Union[str, Path], name: Union[str, Path] = None) -> None:
+def clean_dir_and_create_zip(data_dir: Union[str, Path], name: Union[str, Path] = None) -> None:
     data_dir = Path(data_dir)
     assert data_dir.is_dir()
 
