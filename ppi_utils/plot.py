@@ -311,7 +311,7 @@ def plot_ratio_degree(positives: pd.DataFrame,
                    for ar in (positives, negatives)]
     new_negatives = minus.keys() - plus.keys()
     minus.update({k: 0 for k in plus.keys() - minus.keys()})
-    sp_lookup = positives[['hash_A', 'hash_B', 'species']].melt(
+    sp_lookup = positives[list(positives.columns[:2]) + ['species']].melt(
         id_vars='species')[['value', 'species']].drop_duplicates().set_index(
         'value').to_dict()['species']
     df = pd.DataFrame.from_records([(k, v, minus[k] / v, sp_lookup[k])
@@ -342,7 +342,7 @@ def plot_ratio_degree(positives: pd.DataFrame,
     if not new_negatives:
         return g.figure, None, df, None
 
-    nsp = (negatives[['hash_A', 'hash_B', 'species']]
+    nsp = (negatives[list(negatives.columns[:2]) + ['species']]
            .melt(id_vars='species', value_name='crc_hash')
            [['crc_hash', 'species']].value_counts().reset_index()
            .rename(columns={0: 'degree'}))
@@ -350,7 +350,7 @@ def plot_ratio_degree(positives: pd.DataFrame,
     nsp['kind'] = nsp.crc_hash.apply(lambda crc: 'proteome'
     if crc in new_negatives else 'interactome')
 
-    psp = (positives[['hash_A', 'hash_B', 'species']]
+    psp = (positives[list(positives.columns[:2]) + ['species']]
            .melt(id_vars='species', value_name='crc_hash')
            [['crc_hash', 'species']].value_counts().reset_index()
            .rename(columns={0: 'degree'}))
@@ -402,9 +402,7 @@ def plot_ratio_degree(positives: pd.DataFrame,
 
 
 def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
-                            rasterized: bool = True,
-                            ratio: float = 1.0,
-                            ) -> Figure:
+                            rasterized: bool = True) -> Figure:
     if minus is None:
         plus, minus = sep_plus_minus(plus)
 

@@ -1,4 +1,5 @@
 import concurrent.futures
+import warnings
 from pathlib import Path
 from typing import Union, Callable
 
@@ -26,12 +27,15 @@ def make_c_classes(test_tsv: Union[str, Path],
     c3_ids, test_fasta_ids = [{r.id for r in SeqIO.parse(
         f, 'fasta')} for f in [c3_fasta, test_fasta]]
     assert test_fasta_ids, 'WTF?'
-    assert c3_ids, 'No non-redundant sequences left; cannot construct C3 test!'
+    if not c3_ids:
+        warnings.warn('No non-redundant sequences left; '
+                      'cannot construct C3 test!', RuntimeWarning)
     assert not c3_ids - test_fasta_ids, \
         f'Forgot to replace {test_fasta} after "shrink_files_both_ways", ' \
         f'before the rostclust uniqueprot2d run?'
-    assert test_fasta_ids - c3_ids, 'Test set completely non-redundant, ' \
-                                    'cannot construct C1-2 sets!'
+    if not test_fasta_ids - c3_ids:
+        warnings.warn('Test set completely non-redundant, ' \
+                      'cannot construct C1-2 sets!', RuntimeWarning)
 
     ppis = pd.read_csv(test_tsv, sep='\t', header=0)
     ppi_ids = set(np.unique(ppis.iloc[:, [0, 1]]))
@@ -80,7 +84,7 @@ def fetch_ratios(pairs: pd.DataFrame) -> pd.DataFrame:
 
 def fetch_degrees(pairs: pd.DataFrame, as_dict: bool = False
                   ) -> Union[pd.DataFrame, dict[str, int]]:
-    pairs = (pairs[['hash_A', 'hash_B', 'species']]
+    pairs = (pairs[list(pairs.columns[:2]) + ['species']]
              .melt(id_vars='species', value_name='crc_hash')
              .iloc[:, [0, 2]].value_counts()
              .reset_index().rename(columns={0: 'degree'})
@@ -160,10 +164,11 @@ def find_negative_pairs_tuple(args):
     return find_negative_pairs(*args)
 
 
-def find_negative_pairs(true_ppis: pd.DataFrame,
-                        cfg: Config, proteome: dict[Union[str, int], dict[str, str]] = None,
-                        quiet: bool = False) -> tuple[pd.DataFrame, Union[float, np.ndarray],
-                                                      Union[Figure, None], int]:
+def find_negative_pairs(true_ppis: pd.DataFrame, cfg: Config,
+                        proteome: dict[Union[str, int], dict[str, str]] = None,
+                        quiet: bool = False, plot: bool = True
+                        ) -> tuple[pd.DataFrame, Union[float, np.ndarray],
+                                   Union[Figure, None], int]:
     if proteome is None:
         proteome = dict()
     # recursive call for multi-species case
@@ -171,8 +176,8 @@ def find_negative_pairs(true_ppis: pd.DataFrame,
         print(f'sampling negatives per species! aim for '
               f'{int(len(true_ppis) * cfg.ratio)}')
         negatives, biases = list(), dict()
-        tuples = [(ppis, cfg, {str(sp): proteome.get(str(sp), dict())}, True) for sp, ppis in
-                  true_ppis.groupby('species')]
+        tuples = [(ppis, cfg, {str(sp): proteome.get(str(sp), dict())}, True, False
+                   ) for sp, ppis in true_ppis.groupby('species')]
         with concurrent.futures.ProcessPoolExecutor(max_workers=len(tuples)) as executor:
             for n, b, f, s in executor.map(find_negative_pairs_tuple, tuples):
                 n['species'] = s
@@ -184,11 +189,11 @@ def find_negative_pairs(true_ppis: pd.DataFrame,
         #     negatives.append(n)
         #     biases[s] = b
         negatives = pd.concat(negatives)
-        bias = np.array(list(biases.items()), dtype=float).T
+        bias = pd.DataFrame.from_dict(biases.items()).set_index(0).T
         print(f'{len(negatives)} negatives with overall '
               f'{estimate_bias(true_ppis, negatives)[0]:.3f} '
               f'and average per-species bias of '
-              f'{np.nanmean(bias[1, :]):.3f}±{np.nanstd(bias[1, :]):.3f} (std)')
+              f'{np.nanmean(bias):.3f}±{np.nanstd(bias):.3f} (std)')
         return negatives, bias, None, 0
 
     if 'species' in true_ppis.columns:
@@ -219,7 +224,8 @@ def find_negative_pairs(true_ppis: pd.DataFrame,
         wants = np.full_like(wants, np.floor(sum(counts) * cfg.ratio / n)).astype(int)
 
     # make sure that `wants` is an integer vector and its sum as close to the target as possible
-    idcs = list(rng.choice(n, size=n, replace=True, p=counts / sum(counts)))
+    idcs = list(rng.choice(n, size=n, replace=True,
+                           p=(counts / sum(counts)) if cfg.strategy.value == 1 else None))
     while np.round(sum(counts) * cfg.ratio) > sum(wants):
         idx = idcs.pop(0)
         wants[idx] += 1
@@ -239,7 +245,7 @@ def find_negative_pairs(true_ppis: pd.DataFrame,
     mat[idx_ppis[:, 0], idx_ppis[:, 1]] = 1
     mat[idx_ppis[:, 1], idx_ppis[:, 0]] = 1
 
-    with tqdm(total=limit, position=0, desc=str(sp), disable=disable) as pbar:
+    with tqdm(total=limit // 2, position=0, desc=str(sp), disable=disable) as pbar:
         while np.sum(wants[:n]):
             x = rng.choice(n, size=1, replace=False, p=wants[:n] / sum(wants[:n]))[0]
             wants[x] -= 1
@@ -252,9 +258,9 @@ def find_negative_pairs(true_ppis: pd.DataFrame,
             if x != y:
                 mat[x, y] -= 1
             wants[y] -= 1  # y=n will ignore this
-            pbar.update(2)
+            pbar.update(1)
 
-    if not quiet:
+    if not quiet or plot:
         fig, ax = plt.subplots()
         cmap = mpl.colors.ListedColormap(-(np.min(mat) + 1) * ['#6B0E30']
                                          + ['#D81B60', '#FFFFFF', '#1E88E5'])
