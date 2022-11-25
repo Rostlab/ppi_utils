@@ -66,6 +66,9 @@ def make_negatives(ppis: pd.DataFrame,
     if type(bias) == np.ndarray:
         bias = pd.DataFrame(bias.T, columns=['species', 'bias']
                             ).convert_dtypes()
+    elif type(bias) == pd.DataFrame:
+        bias = bias.T.reset_index().convert_dtypes()
+        bias.columns = ['species', 'bias']
     return ppis, negatives, bias, fig
 
 
@@ -176,8 +179,10 @@ def find_negative_pairs(true_ppis: pd.DataFrame, cfg: Config,
         print(f'sampling negatives per species! aim for '
               f'{int(len(true_ppis) * cfg.ratio)}')
         negatives, biases = list(), dict()
-        tuples = [(ppis, cfg, {str(sp): proteome.get(str(sp), dict())}, True, False
-                   ) for sp, ppis in true_ppis.groupby('species')]
+        tuples = list()
+        for sp, ppis in true_ppis.groupby('species'):
+            sp = int(sp) if str(sp).isnumeric() else str(sp)
+            tuples.append((ppis, cfg, {sp: proteome.get(sp, dict())}, True, False))
         with concurrent.futures.ProcessPoolExecutor(max_workers=len(tuples)) as executor:
             for n, b, f, s in executor.map(find_negative_pairs_tuple, tuples):
                 n['species'] = s
