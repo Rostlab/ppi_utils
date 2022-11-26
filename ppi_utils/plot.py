@@ -402,7 +402,9 @@ def plot_ratio_degree(positives: pd.DataFrame,
 
 
 def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
-                            rasterized: bool = True) -> Figure:
+                            rasterized: bool = True,
+                            height: float = 5, legend: bool = False
+                            ) -> Figure:
     if minus is None:
         plus, minus = sep_plus_minus(plus)
 
@@ -411,9 +413,9 @@ def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
 
     deg['species'] = pd.Categorical(deg.species)
     g = sns.JointGrid(data=deg, x='degree_x', y='degree_y', hue='species',
-                      marginal_ticks=True, height=5, space=0, ratio=6,
+                      marginal_ticks=True, height=height, space=0, ratio=6,
                       palette='colorblind')
-    g.plot_joint(sns.scatterplot, legend=False,
+    g.plot_joint(sns.scatterplot, legend=legend,
                  s=25, alpha=.8, rasterized=rasterized,
                  )
     g.plot_marginals(sns.kdeplot, hue='species', warn_singular=False)
