@@ -169,20 +169,22 @@ def find_negative_pairs_tuple(args):
 
 def find_negative_pairs(true_ppis: pd.DataFrame, cfg: Config,
                         proteome: dict[Union[str, int], dict[str, str]] = None,
-                        quiet: bool = False, plot: bool = True
+                        quiet: bool = False, plot: bool = True,
+                        shutup: bool = False,
                         ) -> tuple[pd.DataFrame, Union[float, np.ndarray],
                                    Union[Figure, None], int]:
     if proteome is None:
         proteome = dict()
     # recursive call for multi-species case
     if 'species' in true_ppis.columns and len(set(true_ppis.species)) > 1:
-        print(f'sampling negatives per species! aim for '
-              f'{int(len(true_ppis) * cfg.ratio)}')
+        if not quiet and not shutup:
+            print(f'sampling negatives per species! aim for '
+                  f'{int(len(true_ppis) * cfg.ratio)}')
         negatives, biases = list(), dict()
         tuples = list()
         for sp, ppis in true_ppis.groupby('species'):
             sp = int(sp) if str(sp).isnumeric() else str(sp)
-            tuples.append((ppis, cfg, {sp: proteome.get(sp, dict())}, True, False))
+            tuples.append((ppis, cfg, {sp: proteome.get(sp, dict())}, True, False, shutup))
         with concurrent.futures.ProcessPoolExecutor(max_workers=len(tuples)) as executor:
             for n, b, f, s in executor.map(find_negative_pairs_tuple, tuples):
                 n['species'] = s
@@ -195,10 +197,11 @@ def find_negative_pairs(true_ppis: pd.DataFrame, cfg: Config,
         #     biases[s] = b
         negatives = pd.concat(negatives)
         bias = pd.DataFrame.from_dict(biases.items()).set_index(0).T
-        print(f'{len(negatives)} negatives with overall '
-              f'{estimate_bias(true_ppis, negatives)[0]:.3f} '
-              f'and average per-species bias of '
-              f'{np.nanmean(bias):.3f}±{np.nanstd(bias):.3f} (std)')
+        if not shutup:
+            print(f'{len(negatives)} negatives with overall '
+                  f'{estimate_bias(true_ppis, negatives)[0]:.3f} '
+                  f'and average per-species bias of '
+                  f'{np.nanmean(bias):.3f}±{np.nanstd(bias):.3f} (std)')
         return negatives, bias, None, 0
 
     if 'species' in true_ppis.columns:
@@ -209,6 +212,9 @@ def find_negative_pairs(true_ppis: pd.DataFrame, cfg: Config,
         quiet = True
         disable = True
         sp = 0
+    if shutup:
+        quiet = True
+        disable = True
 
     # map protein IDs to their sorting index
     uniq_true = {_id: idx for idx, _id in enumerate(
@@ -265,7 +271,7 @@ def find_negative_pairs(true_ppis: pd.DataFrame, cfg: Config,
             wants[y] -= 1  # y=n will ignore this
             pbar.update(1)
 
-    if not quiet or plot:
+    if (not quiet) or plot:
         fig, ax = plt.subplots()
         cmap = mpl.colors.ListedColormap(-(np.min(mat) + 1) * ['#6B0E30']
                                          + ['#D81B60', '#FFFFFF', '#1E88E5'])
@@ -281,13 +287,13 @@ def find_negative_pairs(true_ppis: pd.DataFrame, cfg: Config,
     negs = negs[(negs[:, 0] < n) & (negs[:, 1] < n)]
     # convert back to crc64 hashes
     negatives = pd.DataFrame(reverse(negs)) if len(negs) else pd.DataFrame()
-    if not quiet or not len(negatives):
+    if (not quiet or not len(negatives)) and not shutup:
         tqdm.write(f'{sp}: {len(negatives)}/{limit // 2} interactome negatives')
 
     # look up the indices of potential extra/proteome negatives
     idcs = np.flatnonzero(mat[:, n])
     extra = np.vstack((idcs, -mat[idcs, n])).T
-    if len(extra) and proteome:
+    if len(extra) and len(proteome.get(sp, set())):
         negatives = pd.concat((negatives, find_proteome_negative_pairs(
             extra, set(proteome[sp]) - set(uniq_true), sp, cfg.seed, reverse,
             np.mean(counts) if hasattr(cfg, 'legacy') and cfg.legacy else ideal_neg_med,
