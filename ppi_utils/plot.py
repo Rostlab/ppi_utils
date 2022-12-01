@@ -403,7 +403,8 @@ def plot_ratio_degree(positives: pd.DataFrame,
 
 def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
                             rasterized: bool = True,
-                            height: float = 5, legend: bool = False
+                            height: float = 5, legend: bool = False,
+                            xscale: str = 'log', yscale: str = 'linear',
                             ) -> Figure:
     if minus is None:
         plus, minus = sep_plus_minus(plus)
@@ -420,7 +421,7 @@ def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
                  )
     g.plot_marginals(sns.kdeplot, hue='species', warn_singular=False)
     g.ax_joint.set(  # xlim=(ratio - 4, ratio + 4),
-        yscale='linear', xscale='log',
+        yscale=yscale, xscale=xscale,
         xlabel='positives',
         ylabel='negatives')
 
