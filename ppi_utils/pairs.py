@@ -72,6 +72,26 @@ def make_negatives(ppis: pd.DataFrame,
     return ppis, negatives, bias, fig
 
 
+def get_train_lookup(dd: pd.DataFrame) -> dict[int, dict[str, int]]:
+    assert dd.shape[1] == 3
+    dd = dd.copy()
+    dd.columns = ['ida', 'idb', 'label']
+    dd.label = dd.label.astype(int)
+    return {j: dict(zip(*np.unique(dd.loc[dd.label == j, ['ida', 'idb']],
+                                   return_counts=True))) for j in [0, 1]}
+
+
+def train_counts(dk, pairs: pd.DataFrame):
+    min_pos = dk.apply(lambda s: int(
+        min(pairs[1].get(s[0], 0),
+            pairs[1].get(s[1], 0))), axis=1)
+    max_occ = dk.apply(lambda s: int(
+        max(pairs[0].get(s[0], 0) + pairs[1].get(s[0], 0),
+            pairs[0].get(s[1], 0) + pairs[1].get(s[1], 0)
+            )), axis=1)
+    return (min_pos / max_occ)  # .clip(upper=1)
+
+
 def fetch_ratios(pairs: pd.DataFrame) -> pd.DataFrame:
     degrees = list()
     for l, df in pairs.groupby(list(pairs.columns[2:])):
