@@ -252,7 +252,10 @@ def find_negative_pairs(true_ppis: pd.DataFrame, cfg: Config,
 
     wants = np.floor(counts * cfg.ratio).astype(int)
     if cfg.strategy.value != 1:
-        wants = np.full_like(wants, np.floor(sum(counts) * cfg.ratio / n)).astype(int)
+        fl = np.floor(sum(counts) * cfg.ratio / n)
+        wants = np.full_like(wants, fl).astype(int)
+        if not disable and not quiet:
+            tqdm.write(f'{sp}: {fl} is shared lower target')
 
     # make sure that `wants` is an integer vector and its sum as close to the target as possible
     idcs = list(rng.choice(n, size=n, replace=True,
