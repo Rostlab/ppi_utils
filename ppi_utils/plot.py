@@ -15,7 +15,7 @@ from ppi_utils.pairs import fetch_ratios, fetch_degrees, \
 
 mpl.rcParams['figure.dpi'] = 200
 sns.reset_defaults()
-sns.set_style({'figure.facecolor': 'None'})
+sns.set_style({'figure.facecolor': 'none'})
 
 
 @mpl.style.context('seaborn-poster')
@@ -99,7 +99,7 @@ def plot_homodimer_share(pairs: pd.DataFrame, ratio: float = 10.0) -> Figure:
     # np.asarray(['easy', 'yes', 'close', 'no'])[np.clip(np.asarray(
     # df.filled.values * (c.ratio  + 1)).astype(int), a_min=0, a_max=2)]
 
-    fig, ax = plt.subplots(figsize=(8, 3), facecolor='None')
+    fig, ax = plt.subplots(figsize=(8, 3), facecolor='none')
     scatter = sns.scatterplot(data=df,
                               x='n_ppis',
                               y='share',
@@ -162,7 +162,7 @@ def plot_theoretical_homodimer_share() -> Figure:
 
 def plot_interactome_sizes(taxonomy: pd.DataFrame,
                            val_species: set = None, min_x: int = None,
-                           h: float = 6) -> Figure:
+                           h: float = 6, s: float = 7) -> Figure:
     tax = taxonomy.copy()
     tax['species'] = pd.Categorical(tax.species)
     order = list(tax.species)[::-1]
@@ -181,7 +181,7 @@ def plot_interactome_sizes(taxonomy: pd.DataFrame,
         hue='set_name',
         palette=pal,
         order=order,
-        s=7,
+        s=s,
         height=len(set(tax.species)) / h,
         aspect=2,
         zorder=1000,
@@ -208,6 +208,7 @@ def plot_interactome_sizes(taxonomy: pd.DataFrame,
                       len(tax) + 2,
                       zorder=10, color='w')
     j.tight_layout()
+    j.legend.set_title('')
     j.figure.set_facecolor('white')
     # for sfx in ['png', 'pdf', 'svg']:
     #     j.savefig(f'interactome_sizes.{sfx}', dpi=300, transparent=False)
@@ -283,7 +284,7 @@ def plot_degree_distribution(pairs: pd.DataFrame,
                      # legend=False,
                      aspect=1,
                      height=height,
-                     palette=dict(zip(cats, pal)) if len(cats) <= 8 else 'colorblind',
+                     palette='mako_r',  # dict(zip(cats, pal)) if len(cats) <= 8 else 'colorblind',
                      )
     fg.set(xscale='log', yscale='log', box_aspect=1)
     sns.despine(left=True, bottom=True)
@@ -294,6 +295,7 @@ def plot_degree_distribution(pairs: pd.DataFrame,
 def plot_ratio_degree(positives: pd.DataFrame,
                       negatives: pd.DataFrame = None,
                       ratio: float = 10,
+                      height: float = 5.,
                       taxonomy: pd.DataFrame = None,
                       rasterized: bool = False,
                       ) -> tuple[Figure, Union[None, Figure],
@@ -319,7 +321,7 @@ def plot_ratio_degree(positives: pd.DataFrame,
                                    columns=['crc_hash', 'degree', 'ratio', 'species'])
     df['species'] = pd.Categorical(df.species)
     g = sns.JointGrid(data=df, x='ratio', y='degree', hue='species',
-                      marginal_ticks=True, height=5, space=0, ratio=6,
+                      marginal_ticks=True, height=height, space=0, ratio=6,
                       palette='colorblind')
     g.plot_joint(sns.scatterplot, legend=False,
                  s=25, alpha=.8, rasterized=rasterized,
@@ -334,7 +336,7 @@ def plot_ratio_degree(positives: pd.DataFrame,
     g.refline(x=ratio, lw=1, alpha=.5, zorder=0)
     g.ax_marg_x.set(yticks=[])
     g.ax_marg_y.set(xticks=[])
-    g.figure.set_facecolor('white')
+    g.figure.set_facecolor('none')
     # sns.despine(ax=g.ax_joint, left=False, bottom=False, right=False, top=False)
     sns.despine(ax=g.ax_marg_x, left=True)
     sns.despine(ax=g.ax_marg_y, bottom=False)
@@ -405,6 +407,7 @@ def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
                             rasterized: bool = True,
                             height: float = 5, legend: bool = False,
                             xscale: str = 'log', yscale: str = 'linear',
+                            markersize: int = 25,
                             ) -> Figure:
     if minus is None:
         plus, minus = sep_plus_minus(plus)
@@ -417,7 +420,7 @@ def plot_plus_minus_degrees(plus: pd.DataFrame, minus: pd.DataFrame = None,
                       marginal_ticks=True, height=height, space=0, ratio=6,
                       palette='colorblind')
     g.plot_joint(sns.scatterplot, legend=legend,
-                 s=25, alpha=.8, rasterized=rasterized,
+                 s=markersize, alpha=.8, rasterized=rasterized,
                  )
     g.plot_marginals(sns.kdeplot, hue='species', warn_singular=False)
     g.ax_joint.set(  # xlim=(ratio - 4, ratio + 4),
@@ -580,24 +583,55 @@ def plot_test_ratios(test_all: pd.DataFrame, ratio: float = 10.0,
 
 
 @mpl.style.context('seaborn-whitegrid')
-def plot_c_classes(df: pd.DataFrame) -> tuple[Figure, dict[int, int]]:
-    fig, ax = plt.subplots(figsize=(4, 3), facecolor='white')
+def plot_c_classes(df: pd.DataFrame, ccify: bool = False,
+                   h: float = 3., w: float = 4.,
+                   right: bool = True, bar_width: float = .8, title='count',
+                   ybins: int = 5,
+                   ) -> tuple[Figure, dict[int, int]]:
+    fig, ax = plt.subplots(figsize=(w, h), facecolor='none')
     bg = sns.countplot(
-        x=df.cclass,
-        palette={1: '#FF669D', 2: '#71BDFF', 3: '#FFE083'}, ax=ax)
+        x=df.cclass, width=bar_width,
+        palette={1: '#FF669D', 2: '#A3D2FF', 3: '#FFE083'}, ax=ax)
     fg = sns.countplot(
-        x=df.loc[df.label == 1, 'cclass'],
+        x=df.loc[df.label == 1, 'cclass'], width=bar_width,
         palette={1: '#D81B60', 2: '#1E88E5', 3: '#FFC107'}, ax=ax)
     vc = df.loc[df.label == 1, 'cclass'].value_counts().sort_index()
-    ax.bar_label(container=ax.containers[1], labels=vc)
-    ax.set(box_aspect=1)
+    ax.bar_label(container=ax.containers[1], labels=vc)  # , fontsize='large')
+    ax.locator_params(nbins=ybins, axis='y')
     sns.despine(ax=ax, left=True, bottom=True, right=True)
-    a2b = lambda y: y / len(df.cclass)
-    b2a = lambda y: len(df.cclass) * y
-    ax2 = ax.secondary_yaxis('right', functions=(a2b, b2a))
-    ax2.set(ylabel='share')
-    sns.despine(ax=ax2, left=True, right=True)
+    if right:
+        a2b = lambda y: y / len(df.cclass)
+        b2a = lambda y: len(df.cclass) * y
+        ax2 = ax.secondary_yaxis('right', functions=(a2b, b2a))
+        ax2.set(ylabel='share')
+        sns.despine(ax=ax2, left=True, right=True)
+    if ccify:
+        from matplotlib.ticker import FuncFormatter
+        ax.yaxis.set_major_formatter(
+            FuncFormatter(lambda y, pos: '{:.0f}'.format(y / 1000)))
+        tix = [''] + [c.get_text() for c in ax.get_yticklabels()[1:-1]] + ['×10³']
+        ax.set(xticklabels=[f'C{c.get_text()}' for c in ax.get_xticklabels()],
+               xlabel=None,
+               yticklabels=tix,
+               yticks=ax.get_yticks(),
+               ylabel=None, title=title)
+    else:
+        ax.set(box_aspect=1, ylabel=title)
     return fig, dict(vc)
+
+
+@mpl.style.context('seaborn-whitegrid')
+def small_style_cclasses(df: pd.DataFrame, title: str = '', **kwargs) -> Figure:
+    with mpl.rc_context({'figure.dpi': 128}):
+        kwargs = dict(ccify=True,
+                      h=2.1,
+                      w=1.9,
+                      right=False,
+                      bar_width=.75,
+                      title=title,
+                      ybins=5) | kwargs
+        fig, _ = plot_c_classes(df, **kwargs)
+    return fig
 
 
 # @mpl.style.context('seaborn-whitegrid')
@@ -624,7 +658,7 @@ def plot_interspecies_loss(ppis_without: pd.DataFrame,
     dq.species = pd.Categorical(dq.species)
     dq = dq.convert_dtypes()
 
-    # fig, axes = plt.subplots(1, 2, figsize=(4, 6), sharey=True, facecolor='None')
+    # fig, axes = plt.subplots(1, 2, figsize=(4, 6), sharey=True, facecolor='none')
     # sns.pointplot(data=dq, x='lost', y='species',
     #               color='#1E88E5', scale=.5,
     #               ax=axes[0], join=False, legend=False)
@@ -644,7 +678,7 @@ def plot_interspecies_loss(ppis_without: pd.DataFrame,
     # axes[0].grid(zorder=0)
     # axes[1].grid(zorder=0)
 
-    fig, ax = plt.subplots(figsize=(8, 3), facecolor='None')
+    fig, ax = plt.subplots(figsize=(8, 3), facecolor='none')
     scatter = sns.scatterplot(data=dq,
                               x='lost',
                               y='share',

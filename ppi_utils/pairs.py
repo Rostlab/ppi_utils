@@ -81,7 +81,13 @@ def get_train_lookup(dd: pd.DataFrame) -> dict[int, dict[str, int]]:
                                    return_counts=True))) for j in [0, 1]}
 
 
-def train_counts(dk, pairs: pd.DataFrame):
+def train_counts(dk: pd.DataFrame,
+                 pairs: dict[int, dict[str, int]]) -> pd.Series:
+    """
+    :param dk: a DataFrame with the first two columns filled with IDs
+    :param pairs: a dictionary, the result of get_train_lookup(dk)
+    :return:
+    """
     min_pos = dk.apply(lambda s: int(
         min(pairs[1].get(s[0], 0),
             pairs[1].get(s[1], 0))), axis=1)
