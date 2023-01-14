@@ -133,7 +133,9 @@ def read_json(_json_path: Union[str, Path]) -> dict:
         Path(_json_path).open('r')).items()}
 
 
-def clean_dir_and_create_zip(data_dir: Union[str, Path], name: Union[str, Path] = None) -> None:
+def clean_dir_and_create_zip(data_dir: Union[str, Path],
+                             name: Union[str, Path] = None,
+                             notebook: Union[str, Path] = None) -> None:
     data_dir = Path(data_dir)
     assert data_dir.is_dir()
 
@@ -161,11 +163,17 @@ def clean_dir_and_create_zip(data_dir: Union[str, Path], name: Union[str, Path] 
             if (f := data_dir / f'{d}_bias.svg').is_file():
                 zf.write(f, f'plots/{f.name}')
 
-        nb = list(data_dir.parents[1].rglob(f'{data_dir.name}.ipynb'))
-        if len(nb) != 1:
-            print('found no clearly matching notebook')
+        if (notebook := Path(notebook)) is not None:
+            if not notebook.is_file():
+                print(f'notebook {notebook} is not a file')
+            else:
+                zf.write(notebook, f'{name}.ipynb')
         else:
-            zf.write(nb[0], f'{name}.ipynb')
+            nb = list(data_dir.parents[1].rglob(f'{data_dir.name}.ipynb'))
+            if len(nb) != 1:
+                print('found no clearly matching notebook')
+            else:
+                zf.write(nb[0], f'{name}.ipynb')
 
         # for d in ['train', 'val', 'test']:
         #     if (f := data_dir / f'{d}_proteome.json').is_file():

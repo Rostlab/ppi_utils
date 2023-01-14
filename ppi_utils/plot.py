@@ -586,14 +586,14 @@ def plot_test_ratios(test_all: pd.DataFrame, ratio: float = 10.0,
 def plot_c_classes(df: pd.DataFrame, ccify: bool = False,
                    h: float = 3., w: float = 4.,
                    right: bool = True, bar_width: float = .8, title='count',
-                   ybins: int = 5,
+                   ybins: int = 5, clabels: bool = False,
                    ) -> tuple[Figure, dict[int, int]]:
     fig, ax = plt.subplots(figsize=(w, h), facecolor='none')
     bg = sns.countplot(
-        x=df.cclass, width=bar_width,
+        x=df.cclass,  # width=bar_width,
         palette={1: '#FF669D', 2: '#A3D2FF', 3: '#FFE083'}, ax=ax)
     fg = sns.countplot(
-        x=df.loc[df.label == 1, 'cclass'], width=bar_width,
+        x=df.loc[df.label == 1, 'cclass'],  # width=bar_width,
         palette={1: '#D81B60', 2: '#1E88E5', 3: '#FFC107'}, ax=ax)
     vc = df.loc[df.label == 1, 'cclass'].value_counts().sort_index()
     ax.bar_label(container=ax.containers[1], labels=vc)  # , fontsize='large')
@@ -605,17 +605,17 @@ def plot_c_classes(df: pd.DataFrame, ccify: bool = False,
         ax2 = ax.secondary_yaxis('right', functions=(a2b, b2a))
         ax2.set(ylabel='share')
         sns.despine(ax=ax2, left=True, right=True)
+    if clabels:
+        ax.set(xticklabels=[f'C{c.get_text()}' for c in ax.get_xticklabels()],
+               xlabel=None, ylabel=None, title=title)
     if ccify:
         from matplotlib.ticker import FuncFormatter
         ax.yaxis.set_major_formatter(
             FuncFormatter(lambda y, pos: '{:.0f}'.format(y / 1000)))
         tix = [''] + [c.get_text() for c in ax.get_yticklabels()[1:-1]] + ['×10³']
-        ax.set(xticklabels=[f'C{c.get_text()}' for c in ax.get_xticklabels()],
-               xlabel=None,
-               yticklabels=tix,
-               yticks=ax.get_yticks(),
-               ylabel=None, title=title)
-    else:
+        ax.set(yticklabels=tix,
+               yticks=ax.get_yticks())
+    if not clabels and not ccify:
         ax.set(box_aspect=1, ylabel=title)
     return fig, dict(vc)
 
@@ -629,6 +629,7 @@ def small_style_cclasses(df: pd.DataFrame, title: str = '', **kwargs) -> Figure:
                       right=False,
                       bar_width=.75,
                       title=title,
+                      clabels=True,
                       ybins=5) | kwargs
         fig, _ = plot_c_classes(df, **kwargs)
     return fig
