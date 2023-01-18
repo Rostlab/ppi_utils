@@ -16,10 +16,9 @@ dependencies:
   - h5py
   - tornado
   - scipy
-  - cudatoolkit=11.7.0
   - click=8.0.4
   - seaborn=0.12
   - dataclass-wizard
   - pip:
     - numpy
-prefix: /home/quirin/mambaforge/envs/ppi_utils
+prefix: /home/quirin/mambaforge/envs/ppi
