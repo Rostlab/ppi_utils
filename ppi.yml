@@ -1,0 +1,25 @@
+name: ppi
+channels:
+  - pytorch
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - matplotlib
+  - biopython>=1.79
+  - mmseqs2=13.4511
+  - networkx
+  - graph-tool
+  - tqdm
+  - h5py
+  - tornado
+  - scipy
+  - cudatoolkit=11.7.0
+  - click=8.0.4
+  - seaborn=0.12
+  - dataclass-wizard
+  - pip:
+    - numpy
+prefix: /home/quirin/mambaforge/envs/ppi_utils

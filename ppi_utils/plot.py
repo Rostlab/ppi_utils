@@ -1,4 +1,3 @@
-from seaborn import JointGrid
 from typing import Union
 
 import matplotlib as mpl
