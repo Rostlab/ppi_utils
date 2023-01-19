@@ -14,7 +14,7 @@ packages = ['ppi_utils']
 
 [project]  # tool.poetry
 name = 'ppi_utils'
-version = '0.0.1'
+version = '0.0.2'
 description = ''
 license = {text = 'AFL-3.0'}
 
