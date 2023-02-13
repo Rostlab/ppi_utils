@@ -3,6 +3,8 @@ import json
 import shutil
 import subprocess as cmd
 import zipfile
+
+import pandas as pd
 from Bio.Seq import Seq
 from Bio.SeqUtils.CheckSum import crc64
 from pathlib import Path
@@ -107,6 +109,17 @@ def run_uniqueprot2D(input_file: Union[str, Path],
 
 def get_seq_hash(seq: Union[str, Seq]) -> str:
     return crc64(seq)
+
+
+def get_ids(dt: pd.DataFrame) -> set:
+    if {'ida', 'idb'} < set(dt.columns):
+        return set(dt.ida) | set(dt.idb)
+    elif {'id1', 'id2'} < set(dt.columns):
+        return set(dt.id1) | set(dt.id2)
+    elif {'hash_A', 'hash_B'} < set(dt.columns):
+        return set(dt.hash_A) | set(dt.hash_B)
+    else:
+        return set(dt.iloc[:, 0]) | set(dt.iloc[:, 1])
 
 
 def to_fasta(_id: Union[str, int], seq: str, file_handle: IO) -> None:
