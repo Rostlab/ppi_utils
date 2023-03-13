@@ -13,8 +13,8 @@ from matplotlib.figure import Figure
 from scipy import stats
 from tqdm import tqdm
 
-from ppi_utils.cfg import Config, CorrelationType
-from ppi_utils.general import get_seq_hash
+from .cfg import Config, CorrelationType
+from .general import get_seq_hash
 
 mpl.rcParams['figure.dpi'] = 200
 

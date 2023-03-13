@@ -8,7 +8,7 @@ import requests
 from Bio import SeqIO
 from tqdm import tqdm
 
-from ppi_utils.general import get_seq_hash
+from .general import get_seq_hash
 
 warnings.warn(f'Module isn\'t up-to-date!: {Path(__file__)}', DeprecationWarning)
 

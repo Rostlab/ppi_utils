@@ -9,7 +9,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from tqdm import tqdm
 
-from ppi_utils.general import run_uniqueprot, run_uniqueprot2D, get_seq_hash, glob_type
+from .general import run_uniqueprot, run_uniqueprot2D, get_seq_hash, glob_type
 
 
 def filter_proteomes(fasta_dir: Path,

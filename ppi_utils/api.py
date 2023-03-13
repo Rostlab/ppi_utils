@@ -16,7 +16,7 @@ from Bio.SeqRecord import SeqRecord
 from dataclass_wizard import JSONWizard
 from tqdm import tqdm
 
-from ppi_utils.general import get_seq_hash, to_fasta, file_hash
+from .general import get_seq_hash, to_fasta, file_hash
 
 
 @dataclass

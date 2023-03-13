@@ -8,7 +8,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 
-from ppi_utils.pairs import fetch_ratios, fetch_degrees, \
+from .pairs import fetch_ratios, fetch_degrees, \
     fetch_degree_frequencies, fetch_n_proteins, \
     count_homodimers, estimate_bias, estimate_bias_per_species, sep_plus_minus
 

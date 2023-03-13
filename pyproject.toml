@@ -1,33 +1,34 @@
-[build-system]
-requires = [
-    'setuptools>=42',
-    'wheel'
-]
-build-backend = 'setuptools.build_meta'
-
 [tool.setuptools]
-packages = ['ppi_utils']
+#packages = ['ppi_utils']
+namespaces = true
+include-package-data = true
 
-# [build-system]
-# requires = ['poetry-core>=1.0.0']
-# build-backend = 'poetry.core.masonry.api'
+[tool.setuptools.packages.find]
+where = ["ppi_utils"]
 
-[project]  # tool.poetry
-name = 'ppi_utils'
-version = '0.0.3'
-description = ''
-license = {text = 'AFL-3.0'}
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-authors = ['Leo Kaindl <leo.kaindl@tum.de>']
-license = 'AFL-3.0'
+name = "ppi_utils"
+version = "0.0.5"
+description = ""
+authors = ["Leo Kaindl <leo.kaindl@tum.de>"]
+license = "AFL-3.0"
 
 [tool.poetry.dependencies]
-python = '^3.9.7'
-pytorch = '^1.0.2'
-torch = '^1.11.0'
-biopython = '^1.79'
+python = "^3.9.7"
+#pytorch = "^1.0.2"
+#torch = "^1.11.0"
+biopython = "^1.79"
+pandas = "^1.5.3"
+dataclass-wizard = "^0.22.2"
+networkx = "^3.0"
+scikit-learn = "^1.2.2"
+seaborn = "^0.12.2"
+tqdm = "^4.65.0"
 
-# [tool.poetry.dev-dependencies]
-
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.0.0"
 

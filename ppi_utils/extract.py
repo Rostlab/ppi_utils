@@ -7,8 +7,8 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from ppi_utils.general import glob_type
-from ppi_utils.reduce import dedup_pairs
+from .general import glob_type
+from .reduce import dedup_pairs
 
 
 def unzip_apid(zip_path: Union[str, Path] = None,

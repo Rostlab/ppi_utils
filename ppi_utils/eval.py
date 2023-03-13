@@ -17,9 +17,7 @@ from sklearn.metrics import (
 from sklearn.utils import resample
 from tqdm import tqdm
 
-from ppi_utils.general import glob_type
-
-mpl.use("Agg")
+from .general import glob_type
 
 
 def parse_predictions_from_folder(
